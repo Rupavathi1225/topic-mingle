@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 const AdminAnalytics = () => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -18,6 +19,8 @@ const AdminAnalytics = () => {
   });
   const [countryFilter, setCountryFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
+  const [sessionDetails, setSessionDetails] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchAnalytics();
@@ -58,6 +61,51 @@ const AdminAnalytics = () => {
     if (rsClicks) setRelatedSearchClicks(rsClicks);
     if (allBlogClicks) setBlogClicks(allBlogClicks);
     if (vnClicks) setVisitNowClicks(vnClicks);
+  };
+
+  const toggleSessionExpand = async (sessionId: string) => {
+    const newExpanded = new Set(expandedSessions);
+    if (newExpanded.has(sessionId)) {
+      newExpanded.delete(sessionId);
+      setExpandedSessions(newExpanded);
+    } else {
+      newExpanded.add(sessionId);
+      setExpandedSessions(newExpanded);
+      
+      // Fetch details for this session if not already loaded
+      if (!sessionDetails[sessionId]) {
+        const { data: rsClicks } = await supabase
+          .from('analytics_related_search_clicks')
+          .select('*, related_searches(search_text)')
+          .eq('session_id', sessionId);
+        
+        const { data: bClicks } = await supabase
+          .from('analytics_blog_clicks')
+          .select('*, blogs(title, serial_number)')
+          .eq('session_id', sessionId);
+
+        const { data: vnClicks } = await supabase
+          .from('analytics_visit_now_clicks')
+          .select('*, related_searches(search_text)')
+          .eq('session_id', sessionId);
+        
+        setSessionDetails(prev => ({
+          ...prev,
+          [sessionId]: {
+            relatedSearchClicks: rsClicks || [],
+            blogClicks: bClicks || [],
+            visitNowClicks: vnClicks || []
+          }
+        }));
+      }
+    }
+  };
+
+  const getSessionClickCounts = (sessionId: string) => {
+    const rsCount = relatedSearchClicks.filter(c => c.session_id === sessionId).length;
+    const blogCount = blogClicks.filter(c => c.session_id === sessionId).length;
+    const vnCount = visitNowClicks.filter(c => c.session_id === sessionId).length;
+    return { rsCount, blogCount, vnCount, total: rsCount + blogCount + vnCount };
   };
 
   // Calculate unique clicks for related searches
@@ -298,38 +346,170 @@ const AdminAnalytics = () => {
           <CardTitle>Session Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Session ID</TableHead>
-                <TableHead>IP Address</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Device</TableHead>
-                <TableHead>Last Active</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sessions.slice(0, 20).map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell className="font-mono text-xs">{session.session_id.substring(0, 20)}...</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{session.ip_address}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge>{session.country}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{session.source}</Badge>
-                  </TableCell>
-                  <TableCell>{session.device}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(session.created_at).toLocaleString()}
-                  </TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead>Session ID</TableHead>
+                  <TableHead>IP Address</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Page Views</TableHead>
+                  <TableHead>Clicks</TableHead>
+                  <TableHead>Related Searches</TableHead>
+                  <TableHead>Blog Clicks</TableHead>
+                  <TableHead>Last Active</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {sessions.slice(0, 20).map((session) => {
+                  const isExpanded = expandedSessions.has(session.session_id);
+                  const details = sessionDetails[session.session_id];
+                  const clickCounts = getSessionClickCounts(session.session_id);
+                  
+                  return (
+                    <>
+                      <TableRow key={session.id} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell onClick={() => toggleSessionExpand(session.session_id)}>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {session.session_id.substring(0, 12)}...
+                        </TableCell>
+                        <TableCell>{session.ip_address}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{session.country || 'WW'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{session.source || 'direct'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge>{session.device || 'Desktop'}</Badge>
+                        </TableCell>
+                        <TableCell>{clickCounts.total > 0 ? clickCounts.total : '-'}</TableCell>
+                        <TableCell>{clickCounts.total}</TableCell>
+                        <TableCell>
+                          {clickCounts.rsCount > 0 ? (
+                            <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                              Total: {clickCounts.rsCount}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">Total: 0</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {clickCounts.blogCount > 0 ? (
+                            <Badge className="bg-orange-500/10 text-orange-600 hover:bg-orange-500/20">
+                              Total: {clickCounts.blogCount}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">Total: 0</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(session.created_at).toLocaleDateString()} {new Date(session.created_at).toLocaleTimeString()}
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && details && (
+                        <TableRow>
+                          <TableCell colSpan={11} className="bg-muted/30 p-6">
+                            <div className="space-y-6">
+                              {/* Related Search Clicks */}
+                              {details.relatedSearchClicks && details.relatedSearchClicks.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <ChevronDown className="h-4 w-4 text-green-600" />
+                                    <h4 className="font-semibold text-green-600">View breakdown</h4>
+                                  </div>
+                                  <div className="grid gap-2 ml-6">
+                                    {Array.from(new Set(details.relatedSearchClicks.map((c: any) => c.related_search_id))).map((searchId: any) => {
+                                      const searchClick = details.relatedSearchClicks.find((c: any) => c.related_search_id === searchId);
+                                      const count = details.relatedSearchClicks.filter((c: any) => c.related_search_id === searchId).length;
+                                      return (
+                                        <div key={searchId} className="flex items-center gap-3 text-sm">
+                                          <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">
+                                            Total: {count}
+                                          </Badge>
+                                          <span className="font-medium">
+                                            {searchClick?.related_searches?.search_text || 'Unknown Search'}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Blog Clicks */}
+                              {details.blogClicks && details.blogClicks.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <ChevronDown className="h-4 w-4 text-orange-600" />
+                                    <h4 className="font-semibold text-orange-600">View breakdown</h4>
+                                  </div>
+                                  <div className="grid gap-2 ml-6">
+                                    {Array.from(new Set(details.blogClicks.map((c: any) => c.blog_id))).map((blogId: any) => {
+                                      const blogClick = details.blogClicks.find((c: any) => c.blog_id === blogId);
+                                      const count = details.blogClicks.filter((c: any) => c.blog_id === blogId).length;
+                                      return (
+                                        <div key={blogId} className="flex items-center gap-3 text-sm">
+                                          <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                                            Clicked: {count}
+                                          </Badge>
+                                          <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20">
+                                            Unique: 1
+                                          </Badge>
+                                          <span className="font-medium">
+                                            {blogClick?.blogs?.title || 'Unknown Blog'}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Visit Now Clicks */}
+                              {details.visitNowClicks && details.visitNowClicks.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <ChevronDown className="h-4 w-4 text-blue-600" />
+                                    <h4 className="font-semibold text-blue-600">Visit Now Clicks</h4>
+                                  </div>
+                                  <div className="grid gap-2 ml-6">
+                                    {details.visitNowClicks.map((click: any, idx: number) => (
+                                      <div key={idx} className="flex items-center gap-3 text-sm">
+                                        <Badge className="bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20">
+                                          Click
+                                        </Badge>
+                                        <span className="font-medium">
+                                          {click.related_searches?.search_text || 'Unknown'}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {!details.relatedSearchClicks?.length && !details.blogClicks?.length && !details.visitNowClicks?.length && (
+                                <p className="text-muted-foreground text-sm">No detailed activity for this session</p>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
