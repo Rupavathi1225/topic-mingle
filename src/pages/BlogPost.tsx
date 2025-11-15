@@ -178,50 +178,44 @@ const BlogPost = () => {
                 </Card>
               )}
 
-              {/* Our Posts Section */}
-              <section className="bg-muted/30 p-8 rounded-lg">
-                <h3 className="font-bold text-xl mb-6 text-center">Our posts</h3>
-                
-                {/* Recent Posts Grid */}
-                {recentPosts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {/* Recent Posts Section */}
+              {recentPosts.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="text-2xl font-bold mb-6">Recent posts</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {recentPosts.map((post) => (
                       <a
                         key={post.id}
                         href={`/blog/${post.categorySlug}/${post.slug}`}
                         className="group"
                       >
-                        {post.featured_image && (
-                          <img
-                            src={post.featured_image}
-                            alt={post.title}
-                            className="w-full aspect-video object-cover rounded-lg mb-3"
-                          />
-                        )}
-                        <h4 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                          {post.title}
-                        </h4>
+                        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                          {post.featured_image && (
+                            <div className="overflow-hidden">
+                              <img
+                                src={post.featured_image}
+                                alt={post.title}
+                                className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+                          <div className="p-6">
+                            <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+                              <Badge variant="secondary">{blog.categories.name}</Badge>
+                              <span>•</span>
+                              <span>{new Date(blog.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            </div>
+                            <h3 className="text-xl font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                              {post.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">By {blog.author}</p>
+                          </div>
+                        </Card>
                       </a>
                     ))}
                   </div>
-                )}
-
-                {/* Author Info */}
-                <div className="border-t pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="w-8 h-8 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-lg mb-2">{blog.author}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        All content provided on this page is carefully researched, written, and reviewed to maintain a high level of accuracy and reliability. 
-                        The material should not be interpreted as professional advice in any area, including financial, medical, or legal matters.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                </section>
+              )}
 
             </div>
           </div>
