@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const AdminAnalytics = () => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -127,34 +128,46 @@ const AdminAnalytics = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Country</label>
-              <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Countries</SelectItem>
-                  <SelectItem value="WW">Worldwide</SelectItem>
-                  <SelectItem value="US">USA</SelectItem>
-                  <SelectItem value="IN">India</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={countryFilter} onValueChange={setCountryFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Countries" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WW">Worldwide</SelectItem>
+                    <SelectItem value="US">USA</SelectItem>
+                    <SelectItem value="IN">India</SelectItem>
+                  </SelectContent>
+                </Select>
+                {countryFilter && (
+                  <Button variant="outline" onClick={() => setCountryFilter("")}>
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Source</label>
-              <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Sources" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Sources</SelectItem>
-                  <SelectItem value="direct">Direct</SelectItem>
-                  <SelectItem value="meta">Meta</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Sources" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="direct">Direct</SelectItem>
+                    <SelectItem value="meta">Meta</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  </SelectContent>
+                </Select>
+                {sourceFilter && (
+                  <Button variant="outline" onClick={() => setSourceFilter("")}>
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
