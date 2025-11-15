@@ -181,23 +181,10 @@ const BlogPost = () => {
               {/* Our Posts Section */}
               <section className="bg-muted/30 p-8 rounded-lg">
                 <h3 className="font-bold text-xl mb-6 text-center">Our posts</h3>
-                <div className="text-sm text-muted-foreground leading-relaxed">
-                  <p className="mb-4">
-                    All content provided on this page is carefully researched, written, and reviewed to maintain a high level of accuracy and reliability. 
-                    While every effort is made to ensure the information is current and useful, it is shared for general educational and informational purposes only.
-                  </p>
-                  <p>
-                    The material on this page should not be interpreted as professional advice, diagnosis, or treatment in any area, including financial, medical, or legal matters. 
-                    Readers are strongly advised to verify information independently and consult qualified professionals before making any personal, financial, health, or legal decisions based on the content presented here.
-                  </p>
-                </div>
-              </section>
-
-              {/* Recent Posts */}
-              {recentPosts.length > 0 && (
-                <Card className="p-6">
-                  <h3 className="font-bold text-lg mb-4">Recent posts</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Recent Posts Grid */}
+                {recentPosts.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {recentPosts.map((post) => (
                       <a
                         key={post.id}
@@ -208,7 +195,7 @@ const BlogPost = () => {
                           <img
                             src={post.featured_image}
                             alt={post.title}
-                            className="w-full aspect-video object-cover rounded mb-2"
+                            className="w-full aspect-video object-cover rounded-lg mb-3"
                           />
                         )}
                         <h4 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
@@ -217,8 +204,25 @@ const BlogPost = () => {
                       </a>
                     ))}
                   </div>
-                </Card>
-              )}
+                )}
+
+                {/* Author Info */}
+                <div className="border-t pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg mb-2">{blog.author}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        All content provided on this page is carefully researched, written, and reviewed to maintain a high level of accuracy and reliability. 
+                        The material should not be interpreted as professional advice in any area, including financial, medical, or legal matters.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
             </div>
           </div>
         </div>
