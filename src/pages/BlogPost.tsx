@@ -84,7 +84,8 @@ const BlogPost = () => {
     if (recentData) {
       setRecentPosts(recentData.map(post => ({
         ...post,
-        categorySlug: post.categories.slug
+        categorySlug: post.categories.slug,
+        featuredImage: post.featured_image
       })));
     }
 
@@ -161,17 +162,31 @@ const BlogPost = () => {
 
               {/* Related Searches */}
               {relatedSearches.length > 0 && (
-                <Card className="p-6">
+                <Card className="p-6 bg-muted/30">
                   <h3 className="font-bold text-lg mb-4">Related searches</h3>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-3">
                     {relatedSearches.map((search) => (
                       <Button
                         key={search.id}
-                        variant="outline"
+                        variant="default"
                         onClick={() => handleRelatedSearchClick(search)}
-                        className="text-sm"
+                        className="w-full justify-between text-left h-auto py-4 px-6"
                       >
-                        {search.search_text}
+                        <span>{search.search_text}</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 12h14" />
+                          <path d="m12 5 7 7-7 7" />
+                        </svg>
                       </Button>
                     ))}
                   </div>

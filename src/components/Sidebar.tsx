@@ -40,21 +40,21 @@ const Sidebar = ({ author = "Raja", recentPosts = [] }: SidebarProps) => {
           <CardHeader>
             <CardTitle className="text-lg">Recent posts</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {recentPosts.map((post) => (
               <Link
                 key={post.id}
                 to={`/blog/${post.categorySlug}/${post.slug}`}
-                className="flex gap-3 group"
+                className="flex gap-3 group hover:bg-muted/50 p-2 rounded-lg transition-colors"
               >
                 {post.featuredImage && (
                   <img
                     src={post.featuredImage}
                     alt={post.title}
-                    className="w-20 h-20 object-cover rounded"
+                    className="w-16 h-16 object-cover rounded flex-shrink-0"
                   />
                 )}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
                     {post.title}
                   </h4>
