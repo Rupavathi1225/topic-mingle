@@ -133,7 +133,6 @@ const AdminRelatedSearches = () => {
               <SelectValue placeholder="All blogs" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All blogs</SelectItem>
               {blogs.map((blog) => (
                 <SelectItem key={blog.id} value={blog.id}>
                   [{blog.serial_number}] {blog.title}
