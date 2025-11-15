@@ -14,7 +14,318 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analytics_blog_clicks: {
+        Row: {
+          blog_id: string | null
+          clicked_at: string | null
+          id: string
+          session_id: string
+        }
+        Insert: {
+          blog_id?: string | null
+          clicked_at?: string | null
+          id?: string
+          session_id: string
+        }
+        Update: {
+          blog_id?: string | null
+          clicked_at?: string | null
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_blog_clicks_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_page_views: {
+        Row: {
+          id: string
+          page_id: string | null
+          page_type: string
+          session_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          page_id?: string | null
+          page_type: string
+          session_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          page_id?: string | null
+          page_type?: string
+          session_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
+      analytics_related_search_clicks: {
+        Row: {
+          clicked_at: string | null
+          id: string
+          related_search_id: string | null
+          session_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          id?: string
+          related_search_id?: string | null
+          session_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          id?: string
+          related_search_id?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_related_search_clicks_related_search_id_fkey"
+            columns: ["related_search_id"]
+            isOneToOne: false
+            referencedRelation: "related_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_sessions: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          device: string | null
+          id: string
+          ip_address: string | null
+          session_id: string
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          session_id: string
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          device?: string | null
+          id?: string
+          ip_address?: string | null
+          session_id?: string
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      analytics_visit_now_clicks: {
+        Row: {
+          clicked_at: string | null
+          id: string
+          related_search_id: string | null
+          session_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          id?: string
+          related_search_id?: string | null
+          session_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          id?: string
+          related_search_id?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_visit_now_clicks_related_search_id_fkey"
+            columns: ["related_search_id"]
+            isOneToOne: false
+            referencedRelation: "related_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blogs: {
+        Row: {
+          author: string
+          category_id: number | null
+          content: string
+          created_at: string | null
+          featured_image: string | null
+          id: string
+          published_at: string | null
+          serial_number: number | null
+          slug: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          category_id?: number | null
+          content: string
+          created_at?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          serial_number?: number | null
+          slug: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category_id?: number | null
+          content?: string
+          created_at?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          serial_number?: number | null
+          slug?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blogs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          code_range_end: number
+          code_range_start: number
+          created_at: string | null
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          code_range_end: number
+          code_range_start: number
+          created_at?: string | null
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          code_range_end?: number
+          code_range_start?: number
+          created_at?: string | null
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      pre_landing_pages: {
+        Row: {
+          background_color: string | null
+          background_image_url: string | null
+          created_at: string | null
+          cta_text: string | null
+          description: string | null
+          email_placeholder: string | null
+          headline: string | null
+          id: string
+          logo_url: string | null
+          main_image_url: string | null
+          related_search_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          background_image_url?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          description?: string | null
+          email_placeholder?: string | null
+          headline?: string | null
+          id?: string
+          logo_url?: string | null
+          main_image_url?: string | null
+          related_search_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          background_image_url?: string | null
+          created_at?: string | null
+          cta_text?: string | null
+          description?: string | null
+          email_placeholder?: string | null
+          headline?: string | null
+          id?: string
+          logo_url?: string | null
+          main_image_url?: string | null
+          related_search_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_landing_pages_related_search_id_fkey"
+            columns: ["related_search_id"]
+            isOneToOne: true
+            referencedRelation: "related_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      related_searches: {
+        Row: {
+          blog_id: string | null
+          created_at: string | null
+          id: string
+          order_number: number | null
+          search_text: string
+          target_url: string
+        }
+        Insert: {
+          blog_id?: string | null
+          created_at?: string | null
+          id?: string
+          order_number?: number | null
+          search_text: string
+          target_url: string
+        }
+        Update: {
+          blog_id?: string | null
+          created_at?: string | null
+          id?: string
+          order_number?: number | null
+          search_text?: string
+          target_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "related_searches_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
