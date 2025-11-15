@@ -39,7 +39,9 @@ const AdminAnalytics = () => {
 
     // Get stats
     const { data: pageViews } = await supabase.from('analytics_page_views').select('id');
-    const { data: allBlogClicks } = await supabase.from('analytics_blog_clicks').select('*');
+    const { data: allBlogClicks } = await supabase
+      .from('analytics_blog_clicks')
+      .select('*, blogs(title, serial_number)');
     const { data: rsClicks } = await supabase
       .from('analytics_related_search_clicks')
       .select('*, related_searches(search_text, blogs(title, serial_number))');
@@ -83,6 +85,31 @@ const AdminAnalytics = () => {
     acc[key].clicks.push(click);
     return acc;
   }, {} as Record<string, any>);
+
+  // Group blog clicks by blog
+  const groupedBlogClicks = blogClicks.reduce((acc, click) => {
+    const key = click.blog_id || 'unknown';
+    if (!acc[key]) {
+      acc[key] = {
+        id: key,
+        title: click.blogs?.title || 'Unknown Blog',
+        serialNumber: click.blogs?.serial_number || 0,
+        clicks: []
+      };
+    }
+    acc[key].clicks.push(click);
+    return acc;
+  }, {} as Record<string, any>);
+
+  // Calculate unique clicks for blogs
+  const getBlogUniqueClicks = (blogId: string) => {
+    const clicks = blogClicks.filter(c => c.blog_id === blogId);
+    const uniqueSessions = new Set(clicks.map(c => c.session_id));
+    return {
+      total: clicks.length,
+      unique: uniqueSessions.size
+    };
+  };
 
   return (
     <div className="space-y-6">
@@ -173,6 +200,52 @@ const AdminAnalytics = () => {
         </CardContent>
       </Card>
 
+      {/* Blog Clicks */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Blog Clicks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Blog Title</TableHead>
+                <TableHead>Serial Number</TableHead>
+                <TableHead>Total Clicks</TableHead>
+                <TableHead>Unique Clicks</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.values(groupedBlogClicks).length > 0 ? (
+                Object.values(groupedBlogClicks).map((item: any) => {
+                  const stats = getBlogUniqueClicks(item.id);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.serialNumber}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge>{stats.total}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{stats.unique}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    No blog clicks yet
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       {/* Related Search Clicks */}
       <Card>
         <CardHeader>
@@ -189,23 +262,31 @@ const AdminAnalytics = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.values(groupedSearchClicks).map((item: any) => {
-                const stats = getUniqueClicks(item.id);
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.text}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{item.serialNumber}</Badge> {item.blog}
-                    </TableCell>
-                    <TableCell>
-                      <Badge>{stats.total}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{stats.unique}</Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {Object.values(groupedSearchClicks).length > 0 ? (
+                Object.values(groupedSearchClicks).map((item: any) => {
+                  const stats = getUniqueClicks(item.id);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.text}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.serialNumber}</Badge> {item.blog}
+                      </TableCell>
+                      <TableCell>
+                        <Badge>{stats.total}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{stats.unique}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    No related search clicks yet
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
