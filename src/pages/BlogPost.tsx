@@ -129,8 +129,14 @@ const BlogPost = () => {
             {blog.categories.name} &gt; {new Date(blog.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar on the left */}
+            <div className="lg:col-span-1">
+              <Sidebar author={blog.author} recentPosts={recentPosts} />
+            </div>
+
+            {/* Main content area */}
+            <div className="lg:col-span-3 space-y-6">
               <h1 className="text-4xl font-bold text-foreground">{blog.title}</h1>
 
               <div className="flex items-center gap-1">
@@ -213,10 +219,6 @@ const BlogPost = () => {
                   </div>
                 </Card>
               )}
-            </div>
-
-            <div className="lg:col-span-1">
-              <Sidebar author={blog.author} recentPosts={recentPosts} />
             </div>
           </div>
         </div>
