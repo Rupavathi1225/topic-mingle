@@ -430,11 +430,15 @@ const AdminAnalytics = () => {
                                   <div className="grid gap-2 ml-6">
                                     {Array.from(new Set(details.relatedSearchClicks.map((c: any) => c.related_search_id))).map((searchId: any) => {
                                       const searchClick = details.relatedSearchClicks.find((c: any) => c.related_search_id === searchId);
-                                      const count = details.relatedSearchClicks.filter((c: any) => c.related_search_id === searchId).length;
+                                      const totalClicks = details.relatedSearchClicks.filter((c: any) => c.related_search_id === searchId).length;
+                                      const uniqueClicks = 1; // Each session is unique
                                       return (
                                         <div key={searchId} className="flex items-center gap-3 text-sm">
-                                          <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">
-                                            Total: {count}
+                                          <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                                            Total: {totalClicks}
+                                          </Badge>
+                                          <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20">
+                                            Unique: {uniqueClicks}
                                           </Badge>
                                           <span className="font-medium">
                                             {searchClick?.related_searches?.search_text || 'Unknown Search'}
@@ -456,14 +460,15 @@ const AdminAnalytics = () => {
                                   <div className="grid gap-2 ml-6">
                                     {Array.from(new Set(details.blogClicks.map((c: any) => c.blog_id))).map((blogId: any) => {
                                       const blogClick = details.blogClicks.find((c: any) => c.blog_id === blogId);
-                                      const count = details.blogClicks.filter((c: any) => c.blog_id === blogId).length;
+                                      const totalClicks = details.blogClicks.filter((c: any) => c.blog_id === blogId).length;
+                                      const uniqueClicks = 1; // Each session is unique
                                       return (
                                         <div key={blogId} className="flex items-center gap-3 text-sm">
-                                          <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
-                                            Clicked: {count}
+                                          <Badge className="bg-orange-500/10 text-orange-600 hover:bg-orange-500/20">
+                                            Total: {totalClicks}
                                           </Badge>
-                                          <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20">
-                                            Unique: 1
+                                          <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">
+                                            Unique: {uniqueClicks}
                                           </Badge>
                                           <span className="font-medium">
                                             {blogClick?.blogs?.title || 'Unknown Blog'}
