@@ -4,6 +4,8 @@ import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminRelatedSearches from "@/components/admin/AdminRelatedSearches";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminPreLanding from "@/components/admin/AdminPreLanding";
+import DataOrbitZoneAnalytics from "@/components/admin/DataOrbitZoneAnalytics";
+import WebResultsAnalytics from "@/components/admin/WebResultsAnalytics";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -21,11 +23,13 @@ const Admin = () => {
 
       <main className="container mx-auto p-6">
         <Tabs defaultValue="blogs" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="blogs">Blogs</TabsTrigger>
             <TabsTrigger value="searches">Related Searches</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="prelanding">Pre-Landing</TabsTrigger>
+            <TabsTrigger value="dataorbitzone">DataOrbitZone</TabsTrigger>
+            <TabsTrigger value="webresults">WebResults</TabsTrigger>
           </TabsList>
 
           <TabsContent value="blogs" className="mt-6">
@@ -42,6 +46,14 @@ const Admin = () => {
 
           <TabsContent value="prelanding" className="mt-6">
             <AdminPreLanding />
+          </TabsContent>
+
+          <TabsContent value="dataorbitzone" className="mt-6">
+            <DataOrbitZoneAnalytics />
+          </TabsContent>
+
+          <TabsContent value="webresults" className="mt-6">
+            <WebResultsAnalytics />
           </TabsContent>
         </Tabs>
       </main>
