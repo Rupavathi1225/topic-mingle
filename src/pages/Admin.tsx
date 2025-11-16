@@ -6,6 +6,8 @@ import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminPreLanding from "@/components/admin/AdminPreLanding";
 import DataOrbitZoneAnalytics from "@/components/admin/DataOrbitZoneAnalytics";
 import WebResultsAnalytics from "@/components/admin/WebResultsAnalytics";
+import DataOrbitZoneBlogManager from "@/components/admin/dataorbitzone/DataOrbitZoneBlogManager";
+import DataOrbitZoneRelatedSearches from "@/components/admin/dataorbitzone/DataOrbitZoneRelatedSearches";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -23,35 +25,64 @@ const Admin = () => {
 
       <main className="container mx-auto p-6">
         <Tabs defaultValue="blogs" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="blogs">Blogs</TabsTrigger>
-            <TabsTrigger value="searches">Related Searches</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="prelanding">Pre-Landing</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="topicmingle">TopicMingle</TabsTrigger>
             <TabsTrigger value="dataorbitzone">DataOrbitZone</TabsTrigger>
             <TabsTrigger value="webresults">WebResults</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="blogs" className="mt-6">
-            <AdminBlogManager />
+          {/* TopicMingle Management */}
+          <TabsContent value="topicmingle" className="mt-6">
+            <Tabs defaultValue="blogs" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="blogs">Blogs</TabsTrigger>
+                <TabsTrigger value="searches">Related Searches</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="prelanding">Pre-Landing</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="blogs" className="mt-6">
+                <AdminBlogManager />
+              </TabsContent>
+
+              <TabsContent value="searches" className="mt-6">
+                <AdminRelatedSearches />
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-6">
+                <AdminAnalytics />
+              </TabsContent>
+
+              <TabsContent value="prelanding" className="mt-6">
+                <AdminPreLanding />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          <TabsContent value="searches" className="mt-6">
-            <AdminRelatedSearches />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="mt-6">
-            <AdminAnalytics />
-          </TabsContent>
-
-          <TabsContent value="prelanding" className="mt-6">
-            <AdminPreLanding />
-          </TabsContent>
-
+          {/* DataOrbitZone Management */}
           <TabsContent value="dataorbitzone" className="mt-6">
-            <DataOrbitZoneAnalytics />
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="blogs">Blogs</TabsTrigger>
+                <TabsTrigger value="searches">Related Searches</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="analytics" className="mt-6">
+                <DataOrbitZoneAnalytics />
+              </TabsContent>
+
+              <TabsContent value="blogs" className="mt-6">
+                <DataOrbitZoneBlogManager />
+              </TabsContent>
+
+              <TabsContent value="searches" className="mt-6">
+                <DataOrbitZoneRelatedSearches />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
+          {/* WebResults Management */}
           <TabsContent value="webresults" className="mt-6">
             <WebResultsAnalytics />
           </TabsContent>
