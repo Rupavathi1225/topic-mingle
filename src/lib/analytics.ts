@@ -22,14 +22,20 @@ export const getDeviceType = (): string => {
   return "desktop";
 };
 
-// Get country (using approximate IP-based detection)
-export const getCountry = async (): Promise<string> => {
+// Get real IP address and country
+export const getIPAndCountry = async (): Promise<{ ip: string; country: string }> => {
   try {
     const response = await fetch('https://ipapi.co/json/');
     const data = await response.json();
-    return data.country_code || 'WW';
+    return {
+      ip: data.ip || 'unknown',
+      country: data.country_code || 'WW'
+    };
   } catch (error) {
-    return 'WW';
+    return {
+      ip: 'unknown',
+      country: 'WW'
+    };
   }
 };
 
@@ -37,7 +43,7 @@ export const getCountry = async (): Promise<string> => {
 export const initAnalyticsSession = async (source?: string) => {
   const sessionId = getSessionId();
   const device = getDeviceType();
-  const country = await getCountry();
+  const { ip, country } = await getIPAndCountry();
   const userAgent = navigator.userAgent;
 
   // Check if session already exists
@@ -52,7 +58,7 @@ export const initAnalyticsSession = async (source?: string) => {
       .from('analytics_sessions')
       .insert({
         session_id: sessionId,
-        ip_address: 'hidden', // IP is hidden for privacy
+        ip_address: ip,
         country,
         device,
         user_agent: userAgent,
