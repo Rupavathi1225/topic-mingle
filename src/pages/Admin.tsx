@@ -9,6 +9,10 @@ import WebResultsAnalytics from "@/components/admin/WebResultsAnalytics";
 import DataOrbitZoneBlogManager from "@/components/admin/dataorbitzone/DataOrbitZoneBlogManager";
 import DataOrbitZoneRelatedSearches from "@/components/admin/dataorbitzone/DataOrbitZoneRelatedSearches";
 import WebResultsManager from "@/components/admin/webresults/WebResultsManager";
+import TopSportsAnalytics from "@/components/admin/topsports/TopSportsAnalytics";
+import TopSportsWebResults from "@/components/admin/topsports/TopSportsWebResults";
+import TopSportsCategories from "@/components/admin/topsports/TopSportsCategories";
+import TopSportsHeroEditor from "@/components/admin/topsports/TopSportsHeroEditor";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -30,6 +34,7 @@ const Admin = () => {
             <TabsTrigger value="topicmingle">TopicMingle</TabsTrigger>
             <TabsTrigger value="dataorbitzone">DataOrbitZone</TabsTrigger>
             <TabsTrigger value="webresults">WebResults</TabsTrigger>
+            <TabsTrigger value="topsports">TopSports</TabsTrigger>
           </TabsList>
 
           {/* TopicMingle Management */}
@@ -97,6 +102,34 @@ const Admin = () => {
 
               <TabsContent value="webresults" className="mt-6">
                 <WebResultsManager />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          {/* TopSports Management */}
+          <TabsContent value="topsports" className="mt-6">
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="webresults">Web Results</TabsTrigger>
+                <TabsTrigger value="categories">Categories</TabsTrigger>
+                <TabsTrigger value="hero">Hero Editor</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="analytics" className="mt-6">
+                <TopSportsAnalytics />
+              </TabsContent>
+
+              <TabsContent value="webresults" className="mt-6">
+                <TopSportsWebResults />
+              </TabsContent>
+
+              <TabsContent value="categories" className="mt-6">
+                <TopSportsCategories />
+              </TabsContent>
+
+              <TabsContent value="hero" className="mt-6">
+                <TopSportsHeroEditor />
               </TabsContent>
             </Tabs>
           </TabsContent>
