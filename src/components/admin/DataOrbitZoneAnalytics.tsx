@@ -113,6 +113,46 @@ const DataOrbitZoneAnalytics = () => {
     return { pageViews, blogClicks, relatedSearchClicks, total: pageViews + blogClicks + relatedSearchClicks };
   };
 
+  const getRelatedSearchClicksBreakdown = (events: any[]) => {
+    const clicksMap = new Map();
+    
+    events.filter(e => e.event_type === 'related_search_click' && e.related_searches).forEach(event => {
+      const searchText = event.related_searches.search_text;
+      if (!clicksMap.has(searchText)) {
+        clicksMap.set(searchText, { total: 0, unique: new Set() });
+      }
+      clicksMap.get(searchText).total++;
+      clicksMap.get(searchText).unique.add(event.ip_address);
+    });
+    
+    return Array.from(clicksMap.entries()).map(([searchText, data]) => ({
+      searchText,
+      total: data.total,
+      unique: data.unique.size
+    }));
+  };
+
+  const getBlogClicksBreakdown = (events: any[]) => {
+    const clicksMap = new Map();
+    
+    events.filter(e => e.event_type === 'blog_click' && e.blogs).forEach(event => {
+      const blogTitle = event.blogs.serial_number 
+        ? `[${event.blogs.serial_number}] ${event.blogs.title}`
+        : event.blogs.title;
+      if (!clicksMap.has(blogTitle)) {
+        clicksMap.set(blogTitle, { total: 0, unique: new Set() });
+      }
+      clicksMap.get(blogTitle).total++;
+      clicksMap.get(blogTitle).unique.add(event.ip_address);
+    });
+    
+    return Array.from(clicksMap.entries()).map(([blogTitle, data]) => ({
+      blogTitle,
+      total: data.total,
+      unique: data.unique.size
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">DataOrbitZone Analytics</h2>
@@ -202,8 +242,8 @@ const DataOrbitZoneAnalytics = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="direct">Direct</SelectItem>
-                    <SelectItem value="meta">Meta</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="google">Google</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
                   </SelectContent>
                 </Select>
                 {sourceFilter && (
@@ -220,174 +260,154 @@ const DataOrbitZoneAnalytics = () => {
       {/* Sessions Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Session Details</CardTitle>
+          <CardTitle>Sessions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]"></TableHead>
-                  <TableHead>Session ID</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Page Views</TableHead>
-                  <TableHead>Blog Clicks</TableHead>
-                  <TableHead>Related Searches</TableHead>
-                  <TableHead>Last Active</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.slice(0, 20).map((session) => {
-                  const isExpanded = expandedSessions.has(session.session_id);
-                  const details = sessionDetails[session.session_id];
-                  const sessionStats = getSessionStats(session.events);
-                  
-                  return (
-                    <>
-                      <TableRow key={session.session_id} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell onClick={() => toggleSessionExpand(session.session_id)}>
-                          {isExpanded ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Session ID</TableHead>
+                <TableHead>IP Address</TableHead>
+                <TableHead>Country</TableHead>
+                <TableHead>Device</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Events</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessions.map((session) => {
+                const sessionStats = getSessionStats(session.events);
+                return (
+                  <>
+                    <TableRow key={session.session_id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleSessionExpand(session.session_id)}
+                        >
+                          {expandedSessions.has(session.session_id) ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
                             <ChevronRight className="h-4 w-4" />
                           )}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {session.session_id.substring(0, 12)}...
-                        </TableCell>
-                        <TableCell>{session.ip_address}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{session.country || 'WW'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{session.source || 'direct'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge>{session.device || 'Desktop'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {sessionStats.pageViews > 0 ? (
-                            <Badge className="bg-blue-500/10 text-blue-600">
-                              {sessionStats.pageViews}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {sessionStats.blogClicks > 0 ? (
-                            <Badge className="bg-orange-500/10 text-orange-600">
-                              {sessionStats.blogClicks}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {sessionStats.relatedSearchClicks > 0 ? (
-                            <Badge className="bg-green-500/10 text-green-600">
-                              {sessionStats.relatedSearchClicks}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(session.created_at).toLocaleDateString()} {new Date(session.created_at).toLocaleTimeString()}
-                        </TableCell>
-                      </TableRow>
-                      {isExpanded && details && (
-                        <TableRow>
-                          <TableCell colSpan={10} className="bg-muted/30 p-6">
-                            <div className="space-y-6">
-                              {/* Page Views */}
-                              {details.filter((d: any) => d.event_type === 'page_view').length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <ChevronDown className="h-4 w-4 text-blue-600" />
-                                    <h4 className="font-semibold text-blue-600">Page Views</h4>
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {session.session_id.substring(0, 12)}...
+                      </TableCell>
+                      <TableCell>{session.ip_address || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{session.country || 'N/A'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge>{session.device || 'N/A'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{session.source || 'direct'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge variant="outline">
+                            {sessionStats.pageViews} views
+                          </Badge>
+                          <Badge variant="outline" className="bg-orange-50">
+                            {sessionStats.blogClicks} blog
+                          </Badge>
+                          <Badge variant="outline" className="bg-green-50">
+                            {sessionStats.relatedSearchClicks} search
+                          </Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expandedSessions.has(session.session_id) && sessionDetails[session.session_id] && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="bg-muted/50">
+                          <div className="p-4 space-y-4">
+                            <div>
+                              <h4 className="font-semibold mb-2">Event Timeline</h4>
+                              <div className="space-y-2">
+                                {sessionDetails[session.session_id].map((event: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-4 text-sm">
+                                    <Badge variant="outline">{event.event_type}</Badge>
+                                    <span className="text-muted-foreground">
+                                      {new Date(event.created_at).toLocaleString()}
+                                    </span>
+                                    {event.blogs && (
+                                      <span className="text-foreground">
+                                        {event.blogs.serial_number && `[${event.blogs.serial_number}] `}
+                                        {event.blogs.title}
+                                      </span>
+                                    )}
+                                    {event.related_searches && (
+                                      <span className="text-foreground">{event.related_searches.search_text}</span>
+                                    )}
                                   </div>
-                                  <div className="grid gap-2 ml-6">
-                                    {details.filter((d: any) => d.event_type === 'page_view').map((item: any, idx: number) => (
-                                      <div key={idx} className="flex items-center gap-3 text-sm">
-                                        <Badge className="bg-blue-500/10 text-blue-600">
-                                          View
-                                        </Badge>
-                                        <span className="text-muted-foreground text-xs">
-                                          {new Date(item.created_at).toLocaleTimeString()}
-                                        </span>
-                                      </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-semibold mb-2">Blog Clicks</h4>
+                              {getBlogClicksBreakdown(sessionDetails[session.session_id]).length > 0 ? (
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Blog Title</TableHead>
+                                      <TableHead>Total Clicks</TableHead>
+                                      <TableHead>Unique Clicks</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {getBlogClicksBreakdown(sessionDetails[session.session_id]).map((click, idx) => (
+                                      <TableRow key={idx}>
+                                        <TableCell>{click.blogTitle}</TableCell>
+                                        <TableCell><Badge>{click.total}</Badge></TableCell>
+                                        <TableCell><Badge variant="secondary">{click.unique}</Badge></TableCell>
+                                      </TableRow>
                                     ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Blog Clicks */}
-                              {details.filter((d: any) => d.event_type === 'blog_click').length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <ChevronDown className="h-4 w-4 text-orange-600" />
-                                    <h4 className="font-semibold text-orange-600">Blog Clicks</h4>
-                                  </div>
-                                  <div className="grid gap-2 ml-6">
-                                    {details.filter((d: any) => d.event_type === 'blog_click').map((item: any, idx: number) => (
-                                      <div key={idx} className="flex items-center gap-3 text-sm">
-                                        <Badge className="bg-orange-500/10 text-orange-600">
-                                          Click
-                                        </Badge>
-                                        <span className="font-medium">
-                                          {item.blogs?.title || 'Unknown Blog'}
-                                        </span>
-                                        <span className="text-muted-foreground text-xs">
-                                          {new Date(item.created_at).toLocaleTimeString()}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Related Search Clicks */}
-                              {details.filter((d: any) => d.event_type === 'related_search_click').length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <ChevronDown className="h-4 w-4 text-green-600" />
-                                    <h4 className="font-semibold text-green-600">Related Search Clicks</h4>
-                                  </div>
-                                  <div className="grid gap-2 ml-6">
-                                    {details.filter((d: any) => d.event_type === 'related_search_click').map((item: any, idx: number) => (
-                                      <div key={idx} className="flex items-center gap-3 text-sm">
-                                        <Badge className="bg-green-500/10 text-green-600">
-                                          Click
-                                        </Badge>
-                                        <span className="font-medium">
-                                          {item.related_searches?.search_text || 'Unknown Search'}
-                                        </span>
-                                        <span className="text-muted-foreground text-xs">
-                                          {new Date(item.created_at).toLocaleTimeString()}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {details.length === 0 && (
-                                <p className="text-muted-foreground text-sm">No detailed activity for this session</p>
+                                  </TableBody>
+                                </Table>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No blog clicks in this session</p>
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Related Search Clicks</h4>
+                              {getRelatedSearchClicksBreakdown(sessionDetails[session.session_id]).length > 0 ? (
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Search Text</TableHead>
+                                      <TableHead>Total Clicks</TableHead>
+                                      <TableHead>Unique Clicks</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {getRelatedSearchClicksBreakdown(sessionDetails[session.session_id]).map((click, idx) => (
+                                      <TableRow key={idx}>
+                                        <TableCell>{click.searchText}</TableCell>
+                                        <TableCell><Badge>{click.total}</Badge></TableCell>
+                                        <TableCell><Badge variant="secondary">{click.unique}</Badge></TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No related search clicks in this session</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                );
+              })}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

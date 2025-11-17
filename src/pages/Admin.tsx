@@ -8,6 +8,7 @@ import DataOrbitZoneAnalytics from "@/components/admin/DataOrbitZoneAnalytics";
 import WebResultsAnalytics from "@/components/admin/WebResultsAnalytics";
 import DataOrbitZoneBlogManager from "@/components/admin/dataorbitzone/DataOrbitZoneBlogManager";
 import DataOrbitZoneRelatedSearches from "@/components/admin/dataorbitzone/DataOrbitZoneRelatedSearches";
+import WebResultsManager from "@/components/admin/webresults/WebResultsManager";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -84,7 +85,20 @@ const Admin = () => {
 
           {/* WebResults Management */}
           <TabsContent value="webresults" className="mt-6">
-            <WebResultsAnalytics />
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="webresults">Web Results</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="analytics" className="mt-6">
+                <WebResultsAnalytics />
+              </TabsContent>
+
+              <TabsContent value="webresults" className="mt-6">
+                <WebResultsManager />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </main>
