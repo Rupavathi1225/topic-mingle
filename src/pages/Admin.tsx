@@ -13,14 +13,7 @@ import TopSportsAnalytics from "@/components/admin/topsports/TopSportsAnalytics"
 import TopSportsWebResults from "@/components/admin/topsports/TopSportsWebResults";
 import TopSportsCategories from "@/components/admin/topsports/TopSportsCategories";
 import TopSportsHeroEditor from "@/components/admin/topsports/TopSportsHeroEditor";
-import TopUniversityTerritianAnalytics from "@/components/admin/topuniversityterritian/TopUniversityTerritianAnalytics";
-import TopUniversityTerritianWebResults from "@/components/admin/topuniversityterritian/TopUniversityTerritianWebResults";
-import TopUniversityTerritianCategories from "@/components/admin/topuniversityterritian/TopUniversityTerritianCategories";
-import TopUniversityTerritianLandingPage from "@/components/admin/topuniversityterritian/TopUniversityTerritianLandingPage";
-import TopUniversityTerritianRelatedSearches from "@/components/admin/topuniversityterritian/TopUniversityTerritianRelatedSearches";
-import TopUniversityTerritianPreLanding from "@/components/admin/topuniversityterritian/TopUniversityTerritianPreLanding";
-import TopUniversityTerritianGeoRestrictions from "@/components/admin/topuniversityterritian/TopUniversityTerritianGeoRestrictions";
-import TopUniversityTerritianEmailCaptures from "@/components/admin/topuniversityterritian/TopUniversityTerritianEmailCaptures";
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -43,7 +36,7 @@ const Admin = () => {
             <TabsTrigger value="dataorbitzone">DataOrbitZone</TabsTrigger>
             <TabsTrigger value="webresults">WebResults</TabsTrigger>
             <TabsTrigger value="topsports">TopSports</TabsTrigger>
-            <TabsTrigger value="topuniversityterritian">TopUniversityTerritian</TabsTrigger>
+          
           </TabsList>
 
           {/* TopicMingle Management */}
@@ -156,36 +149,7 @@ const Admin = () => {
                 <TabsTrigger value="email">Email Captures</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="landing" className="mt-6">
-                <TopUniversityTerritianLandingPage />
-                <div className="mt-6">
-                  <TopUniversityTerritianRelatedSearches />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="categories" className="mt-6">
-                <TopUniversityTerritianCategories />
-              </TabsContent>
-
-              <TabsContent value="webresults" className="mt-6">
-                <TopUniversityTerritianWebResults />
-              </TabsContent>
-
-              <TabsContent value="analytics" className="mt-6">
-                <TopUniversityTerritianAnalytics />
-              </TabsContent>
-
-              <TabsContent value="prelanding" className="mt-6">
-                <TopUniversityTerritianPreLanding />
-              </TabsContent>
-
-              <TabsContent value="geo" className="mt-6">
-                <TopUniversityTerritianGeoRestrictions />
-              </TabsContent>
-
-              <TabsContent value="email" className="mt-6">
-                <TopUniversityTerritianEmailCaptures />
-              </TabsContent>
+             
             </Tabs>
           </TabsContent>
         </Tabs>
