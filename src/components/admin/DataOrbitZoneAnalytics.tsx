@@ -9,164 +9,197 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { format } from "date-fns";
 
 /**
- * Redesigned DataOrbitZoneAnalytics
- * - Card-based session UI (stacked)
- * - Summary metric tiles
- * - Filters preserved
- * - Expandable session details with Related Searches & Blog Clicks
- * - Reuses your dataOrbitZoneClient queries and aggregation logic
+ * DataOrbitZoneAnalytics — UI updated to match TopicMingle screenshot
+ * - Logic updated to fetch nested click tables so Details shows click data
+ * - Colors / spacing / structure adjusted
+ *
+ * Added: fetch prelanding_emails and attach to sessions (session.emails)
+ * Display: Collected Emails shown in expanded details
  */
 
-const gradientByIndex = (i: number) => {
-  const palettes = [
-    "from-orange-400 to-orange-600",
-    "from-blue-400 to-blue-600",
-    "from-purple-500 to-violet-600",
-    "from-emerald-400 to-teal-600",
-    "from-pink-400 to-rose-600",
-  ];
-  return palettes[i % palettes.length];
-};
-
-const shortId = (id?: string) => (id ? `${id.slice(0, 11)}...` : "-");
+const shortId = (id?: string) => (id ? `${id.slice(0, 12)}...` : "-");
 
 const SessionCard = ({ session, idx }: { session: any; idx: number }) => {
   const [open, setOpen] = useState(false);
 
-  // build related searches summary
+  // Prefer explicit click arrays if available (these are attached in fetchSessions)
+  const relatedClicksArray =
+    session.related_search_clicks ||
+    (session.events || []).filter((e: any) => e.event_type === "related_search_click");
+  const blogClicksArray = session.blog_clicks || (session.events || []).filter((e: any) => e.event_type === "blog_click");
+  const visitNowClicksArray = session.visit_now_clicks || [];
+
+  // Build maps (for display) from whichever source we have
   const relatedMap = new Map<string, { text: string; total: number; uniqueIPs: Set<string> }>();
   const blogMap = new Map<string, { title: string; total: number; uniqueIPs: Set<string> }>();
 
-  (session.events || []).forEach((ev: any) => {
-    if (ev.event_type === "related_search_click" && ev.related_searches) {
-      const key = ev.related_searches.search_text || "Unknown";
-      if (!relatedMap.has(key)) relatedMap.set(key, { text: key, total: 0, uniqueIPs: new Set() });
-      const r = relatedMap.get(key)!;
-      r.total++;
-      if (ev.ip_address) r.uniqueIPs.add(ev.ip_address);
-    }
-    if (ev.event_type === "blog_click" && ev.blogs) {
-      const title = ev.blogs.serial_number ? `[${ev.blogs.serial_number}] ${ev.blogs.title}` : ev.blogs.title || "Unknown";
-      if (!blogMap.has(title)) blogMap.set(title, { title, total: 0, uniqueIPs: new Set() });
-      const b = blogMap.get(title)!;
-      b.total++;
-      if (ev.ip_address) b.uniqueIPs.add(ev.ip_address);
-    }
+  relatedClicksArray.forEach((ev: any) => {
+    const text = ev.related_searches?.search_text || ev.search_text || "Unknown";
+    if (!relatedMap.has(text)) relatedMap.set(text, { text, total: 0, uniqueIPs: new Set() });
+    const r = relatedMap.get(text)!;
+    r.total++;
+    if (ev.ip_address) r.uniqueIPs.add(ev.ip_address);
+  });
+
+  blogClicksArray.forEach((ev: any) => {
+    const title = ev.blogs?.title ? (ev.blogs.serial_number ? `[${ev.blogs.serial_number}] ${ev.blogs.title}` : ev.blogs.title) : (ev.title || "Unknown");
+    if (!blogMap.has(title)) blogMap.set(title, { title, total: 0, uniqueIPs: new Set() });
+    const b = blogMap.get(title)!;
+    b.total++;
+    if (ev.ip_address) b.uniqueIPs.add(ev.ip_address);
   });
 
   const related = Array.from(relatedMap.values()).map((r) => ({ ...r, unique: r.uniqueIPs.size }));
   const blogs = Array.from(blogMap.values()).map((b) => ({ ...b, unique: b.uniqueIPs.size }));
 
-  const totalClicks = session.total_clicks ?? (related.reduce((s, r) => s + r.total, 0) + blogs.reduce((s, b) => s + b.total, 0));
+  const totalClicks =
+    session.total_clicks ??
+    (related.reduce((s, r) => s + r.total, 0) + blogs.reduce((s, b) => s + b.total, 0) + (visitNowClicksArray?.length || 0));
 
-  const gradient = gradientByIndex(idx);
+  // Colors chosen to match TopicMingle screenshot
+  const outerCard = "bg-[#4B169E]"; // solid purple session card
+  const innerPanel = "bg-[#5b2bd9]/60"; // slightly lighter inner panel effect (semi-transparent)
+  const detailsWhite = "bg-white";
 
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm border">
-      <div className={`p-4 md:p-6 bg-gradient-to-r ${gradient} text-white flex flex-col md:flex-row md:items-center gap-4`}>
-        <div className="flex items-center gap-3 md:flex-1">
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-semibold text-sm">
-            {session.device ? session.device[0] : "S"}
-          </div>
-          <div>
-            <div className="text-sm font-semibold">{session.device || "Unknown Device"} • {session.source || "direct"}</div>
-            <div className="text-xs opacity-90 mt-1">
-              <span className="font-mono">{shortId(session.session_id)}</span> — {session.ip_address || "IP N/A"} • {session.country || "WW"}
+    <div className="rounded-xl">
+      {/* Outer purple panel with subtle inner rounded panel (matches screenshot) */}
+      <div className={`p-4 rounded-lg shadow-md border border-white/8 ${outerCard}`}>
+        {/* inner panel for the top row (slightly inset) */}
+        <div className={`rounded-md p-4 border border-white/6 ${innerPanel}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/12 flex items-center justify-center text-white font-semibold">
+                {session.device ? session.device[0] : "d"}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-white truncate">{shortId(session.session_id)}</div>
+                <div className="text-xs text-white/75 truncate">{session.device || "Unknown Device"} • {session.source || "Browser"}</div>
+                <div className="text-xs text-white/60 mt-1 truncate">{session.ip_address || "IP unknown"} • {session.city ? `${session.city}, ` : ""}{session.country || "WW"}</div>
+              </div>
             </div>
-            <div className="text-xs opacity-80 mt-1">{session.city ? `${session.city}, ` : ""}{session.country || ""}</div>
+
+            {/* Right side: Details button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setOpen(!open)}
+                className="text-xs bg-white/10 text-white px-3 py-1 rounded-md hover:bg-white/16 transition"
+                aria-expanded={open}
+              >
+                {open ? "Hide" : "Details"}
+              </button>
+            </div>
+          </div>
+
+          {/* Metrics row */}
+          <div className="mt-4 grid grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-sm text-white/80">Page Views</div>
+              <div className="text-lg font-bold text-white">{session.page_views ?? "-"}</div>
+            </div>
+
+            <div>
+              <div className="text-sm text-white/80">Unique Pages</div>
+              <div className="text-lg font-bold text-white">{(session.events || []).filter((e: any) => e.event_type === "blog_view" && e.blog_id).length}</div>
+            </div>
+
+            <div>
+              <div className="text-sm text-white/80">Total Clicks</div>
+              <div className="text-lg font-bold text-white">{totalClicks}</div>
+            </div>
+
+            <div>
+              <div className="text-sm text-white/80">Unique Clicks</div>
+              <div className="text-lg font-bold text-white">{new Set((session.events || []).filter((e:any) => (e.event_type === "blog_click" && e.blog_id) || (e.event_type === "related_search_click" && e.related_search_id)).map((e:any) => e.blog_id || e.related_search_id)).size}</div>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold">{session.page_views ?? 0}</div>
-            <div className="text-xs opacity-90">Page Views</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-2xl font-bold">{totalClicks}</div>
-            <div className="text-xs opacity-90">Total Clicks</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-2xl font-bold">{blogs.reduce((s, b) => s + b.total, 0)}</div>
-            <div className="text-xs opacity-90">Blog Clicks</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-2xl font-bold">{related.reduce((s, r) => s + r.total, 0)}</div>
-            <div className="text-xs opacity-90">Search Clicks</div>
-          </div>
-
-          <button
-            onClick={() => setOpen(!open)}
-            className="ml-2 inline-flex items-center gap-2 rounded-md bg-white/20 px-3 py-1 text-sm hover:bg-white/30 transition"
-            aria-expanded={open}
-          >
-            {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            <span className="text-white text-sm">{open ? "Hide" : "Details"}</span>
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="bg-white p-5 md:p-6 border-t">
-          <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <h4 className="font-semibold mb-3">Related Searches</h4>
-              {related.length > 0 ? (
-                <div className="space-y-2">
-                  {related.map((r, i) => (
-                    <div key={i} className="p-3 bg-gray-50 border rounded">
-                      <div className="font-medium text-sm">{r.text}</div>
-                      <div className="flex gap-3 mt-2 text-xs text-gray-600">
-                        <div className="px-2 py-1 bg-blue-50 rounded">Total: {r.total}</div>
-                        <div className="px-2 py-1 bg-purple-50 rounded">Unique: {r.unique}</div>
-                      </div>
-                    </div>
-                  ))}
+        {/* Expanded details area (white card inside purple) */}
+        {open && (
+          <div className="mt-4 p-4 rounded-md border border-white/8" style={{ background: "#4A1AA0" }}>
+            <div className="rounded-md p-0 border border-white/8 overflow-hidden">
+              <div className={`p-4 ${detailsWhite} rounded`}>
+                {/* small search header */}
+                <div className="flex items-center gap-2 mb-3">
+                  <Search className="h-4 w-4 text-gray-500" />
+                  <div className="text-sm font-semibold text-gray-700">Related Search Clicks</div>
                 </div>
-              ) : (
-                <div className="text-sm text-gray-500">No related searches</div>
-              )}
-            </div>
 
-            <div>
-              <h4 className="font-semibold mb-3">Blog Clicks</h4>
-              {blogs.length > 0 ? (
-                <div className="space-y-2">
-                  {blogs.map((b, i) => (
-                    <div key={i} className="p-3 bg-gray-50 border rounded">
-                      <div className="font-medium text-sm">{b.title}</div>
-                      <div className="flex gap-3 mt-2 text-xs text-gray-600">
-                        <div className="px-2 py-1 bg-amber-50 rounded">Total: {b.total}</div>
-                        <div className="px-2 py-1 bg-indigo-50 rounded">Unique: {b.unique}</div>
+                {/* Related search list */}
+                {related.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {related.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded border">
+                        <div className="text-sm text-gray-800">{r.text}</div>
+                        <div className="text-xs text-gray-600">Unique: {r.unique} <span className="ml-3 text-indigo-600 font-semibold">Total: {r.total}</span></div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-gray-500">No blog clicks</div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 mb-4">No related search clicks</div>
+                )}
 
-            <div>
-              <h4 className="font-semibold mb-3">Session Info</h4>
-              <div className="space-y-2 text-sm text-gray-700">
-                <div>IP: <span className="font-mono">{session.ip_address || "N/A"}</span></div>
-                <div>Last Active: {session.last_active ? format(new Date(session.last_active), "M/d/yyyy, h:mm:ss a") : "-"}</div>
-                <div>Source: {session.source || "direct"}</div>
-                <div>Device: {session.device || "Unknown"}</div>
-                <div>Events: {(session.events || []).length}</div>
+                {/* Blog Clicks */}
+                <div className="mb-4">
+                  <div className="text-sm font-semibold text-gray-700 mb-2">Blog Clicks</div>
+                  {blogs.length > 0 ? (
+                    <div className="space-y-2">
+                      {blogs.map((b, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded border">
+                          <div className="text-sm text-gray-800">{b.title}</div>
+                          <div className="text-xs text-gray-600">Unique: {b.unique} <span className="ml-3 text-rose-500 font-semibold">Total: {b.total}</span></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No blog clicks</div>
+                  )}
+                </div>
+
+                {/* Visit Now Clicks */}
+                <div>
+                  <div className="text-sm font-semibold text-gray-700 mb-2">Visit Now Clicks</div>
+                  {visitNowClicksArray && visitNowClicksArray.length > 0 ? (
+                    visitNowClicksArray.map((v: any, i: number) => (
+                      <div key={i} className="p-3 rounded border mb-2 text-sm text-gray-700">
+                        <span className="inline-block px-2 py-1 text-xs bg-cyan-50 rounded mr-2">Click</span>
+                        {v.related_searches?.search_text || v.search_text || "Unknown"}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">No visit now clicks</div>
+                  )}
+                </div>
+
+                {/* Collected Emails (NEW) */}
+                <div className="mt-6">
+                  <div className="text-sm font-semibold text-gray-700 mb-2">Collected Emails</div>
+                  {session.emails && session.emails.length > 0 ? (
+                    <div className="space-y-2">
+                      {session.emails.map((e: any) => (
+                        <div key={e.id} className="p-3 rounded border bg-gray-50 text-sm flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{e.email}</div>
+                            <div className="text-xs text-gray-500">{e.related_searches?.search_text || e.related_search_id || ""}</div>
+                          </div>
+                          <div className="text-xs text-gray-500">{format(new Date(e.created_at), "MMM dd, yyyy HH:mm")}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No emails collected</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
@@ -180,12 +213,10 @@ export default function DataOrbitZoneAnalytics() {
 
   useEffect(() => {
     fetchFilterOptions();
-    // fetchSessions depends on filters
     fetchSessions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryFilter, sourceFilter]);
 
-  // Fetch dropdown options
   const fetchFilterOptions = async () => {
     try {
       const { data } = await dataOrbitZoneClient.from("analytics").select("country, source");
@@ -200,7 +231,8 @@ export default function DataOrbitZoneAnalytics() {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      let query = dataOrbitZoneClient
+      // fetch raw events (existing approach) — keeps compatibility with your existing logic
+      const { data } = await dataOrbitZoneClient
         .from("analytics")
         .select(`
           *,
@@ -209,8 +241,40 @@ export default function DataOrbitZoneAnalytics() {
         `)
         .order("created_at", { ascending: false });
 
-      const { data } = await query;
       const events = data || [];
+
+      // fetch click tables and map by session_id so details panel can show them
+      const [{ data: blogClicks }, { data: rsClicks }, { data: vnClicks }, { data: emails }] = await Promise.all([
+        dataOrbitZoneClient.from("blog_clicks").select("*, blogs(title, serial_number)"),
+        dataOrbitZoneClient.from("related_search_clicks").select("*, related_searches(search_text)"),
+        dataOrbitZoneClient.from("visit_now_clicks").select("*, related_searches(search_text)"),
+        // fetch prelanding emails and include related_searches search_text so we can show it in UI
+        dataOrbitZoneClient.from("prelanding_emails").select("*, related_searches(search_text)").order("created_at", { ascending: false }),
+      ]);
+
+      const blogClicksBySession = new Map<string, any[]>();
+      (blogClicks || []).forEach((c: any) => {
+        const sid = c.session_id || c.session?.session_id || c.sessionId || c.sessionId;
+        if (!sid) return;
+        if (!blogClicksBySession.has(sid)) blogClicksBySession.set(sid, []);
+        blogClicksBySession.get(sid).push(c);
+      });
+
+      const rsClicksBySession = new Map<string, any[]>();
+      (rsClicks || []).forEach((c: any) => {
+        const sid = c.session_id || c.session?.session_id || c.sessionId;
+        if (!sid) return;
+        if (!rsClicksBySession.has(sid)) rsClicksBySession.set(sid, []);
+        rsClicksBySession.get(sid).push(c);
+      });
+
+      const vnClicksBySession = new Map<string, any[]>();
+      (vnClicks || []).forEach((c: any) => {
+        const sid = c.session_id || c.session?.session_id || c.sessionId;
+        if (!sid) return;
+        if (!vnClicksBySession.has(sid)) vnClicksBySession.set(sid, []);
+        vnClicksBySession.get(sid).push(c);
+      });
 
       // Client-side filters
       const filtered = events.filter((e: any) => {
@@ -233,18 +297,18 @@ export default function DataOrbitZoneAnalytics() {
             page_views: 0,
             total_clicks: 0,
             events: [],
+            // we'll attach click arrays below
+            blog_clicks: [],
+            related_search_clicks: [],
+            visit_now_clicks: [],
+            emails: [], // will be filled below
           });
         }
 
         const session = sessionMap.get(event.session_id);
 
-        if (event.event_type === "blog_view") {
-          session.page_views++;
-        }
-
-        if (event.event_type === "blog_click" || event.event_type === "related_search_click") {
-          session.total_clicks++;
-        }
+        if (event.event_type === "blog_view") session.page_views++;
+        if (event.event_type === "blog_click" || event.event_type === "related_search_click") session.total_clicks++;
 
         session.events.push(event);
 
@@ -252,6 +316,33 @@ export default function DataOrbitZoneAnalytics() {
           session.last_active = event.created_at;
         }
       });
+
+      // Attach click arrays to sessions (so SessionCard can read them)
+      for (const [sid, sess] of sessionMap.entries()) {
+        sess.blog_clicks = blogClicksBySession.get(sid) || [];
+        sess.related_search_clicks = rsClicksBySession.get(sid) || [];
+        sess.visit_now_clicks = vnClicksBySession.get(sid) || [];
+        // Optionally merge click rows into events so previous logic still works
+        sess.events = (sess.events || []).concat(sess.blog_clicks || [], sess.related_search_clicks || [], sess.visit_now_clicks || []);
+      }
+
+      // Attach emails to sessions:
+      // emails.data is the array returned (we named the promise result 'emails')
+      const emailsArray = emails || [];
+      for (const [sid, sess] of sessionMap.entries()) {
+        // session may have related_search_clicks with related_search_id, or events that contain related_search_id
+        const relatedIds = new Set<string>();
+        (sess.related_search_clicks || []).forEach((rc: any) => {
+          if (rc.related_search_id) relatedIds.add(rc.related_search_id);
+        });
+        // also include any related_search_id from merged events (some rows may be direct)
+        (sess.events || []).forEach((ev: any) => {
+          if (ev.related_search_id) relatedIds.add(ev.related_search_id);
+        });
+
+        // find emails where related_search_id matches any of the relatedIds
+        sess.emails = (emailsArray || []).filter((em: any) => em.related_search_id && relatedIds.has(em.related_search_id));
+      }
 
       setSessions(Array.from(sessionMap.values()));
     } catch (err) {
@@ -262,142 +353,117 @@ export default function DataOrbitZoneAnalytics() {
     }
   };
 
-  // Summary Stats
+  // Summary stats
   const totalSessions = sessions.length;
   const totalPageViews = sessions.reduce((s, sess) => s + (sess.page_views ?? 0), 0);
   const totalClicks = sessions.reduce((s, sess) => s + (sess.total_clicks ?? 0), 0);
   const uniqueVisitors = new Set(sessions.map((s) => s.ip_address)).size;
 
-  // Unique Clicks (blog_id or related_search_id)
   const uniqueClicks = new Set(
     sessions.flatMap((sess) =>
       (sess.events || [])
         .filter((e: any) =>
           (e.event_type === "related_search_click" && e.related_search_id) ||
-          (e.event_type === "blog_click" && e.blog_id)
+          (e.event_type === "blog_click" && e.blog_id) ||
+          // sometimes click rows from click tables don't have event_type; include blog_clicks/related_search_clicks ids
+          e.blog_id || e.related_search_id || e.id
         )
-        .map((e: any) => e.related_search_id || e.blog_id)
+        .map((e: any) => e.related_search_id || e.blog_id || e.id)
     )
   ).size;
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Admin Panel - DramaOrbitZone (Multi-site)</h1>
-
-        {/* Summary Tiles */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <Card className="p-5 bg-orange-50 border-orange-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Total Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{totalSessions}</div>
-              <div className="text-sm text-gray-600">Unique visitors: {uniqueVisitors}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="p-5 bg-blue-50 border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Page Views</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{totalPageViews}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="p-5 bg-purple-50 border-purple-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Unique Pages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">
-                {
-                  new Set(
-                    sessions.flatMap((s) =>
-                      (s.events || []).filter((e: any) => e.event_type === "blog_view" && e.blog_id).map((e: any) => e.blog_id)
-                    )
-                  ).size
-                }
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="p-5 bg-green-50 border-green-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Total Clicks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{totalClicks}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="p-5 bg-pink-50 border-pink-200">
-            <CardHeader>
-              <CardTitle className="text-sm">Unique Clicks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-pink-600">{uniqueClicks}</div>
-              <div className="text-sm text-gray-600">Unique Blog + Search Clicks</div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen pb-12" style={{ background: "linear-gradient(180deg,#4b169e,#3d0d99)" }}>
+      <div className="max-w-4xl mx-auto pt-8 px-4">
+        {/* Header Tabs (kept simple) */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">Admin Panel - DataOrbitZone</h1>
         </div>
 
-        {/* Filters */}
-        <Card className="p-5 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="w-full md:w-1/2 grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium block mb-2">Country</label>
-                <Select value={countryFilter} onValueChange={(v) => setCountryFilter(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Countries" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {filterOptions.countries.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {/* Main purple container */}
+        <div className="rounded-xl overflow-hidden" style={{ background: "linear-gradient(180deg,#5b2bd9,#4b169e)" }}>
+          <div className="p-6">
+            {/* Top summary card (white) */}
+            <div className="flex items-start justify-between gap-6 mb-6">
+              <div className="w-full max-w-xs">
+                <div className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">D</div>
+                    <div>
+                      <div className="text-lg font-semibold">DataOrbitZone</div>
+                      <div className="text-xs text-muted-foreground">{totalSessions} sessions</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Page Views</div>
+                      <div className="text-2xl font-bold text-gray-900"> {totalPageViews} </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Unique Visitors</div>
+                      <div className="text-2xl font-bold text-gray-900"> {uniqueVisitors} </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm text-muted-foreground">Total Clicks</div>
+                      <div className="text-2xl font-bold text-rose-500"> {totalClicks} </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Unique Clicks</div>
+                      <div className="text-2xl font-bold text-violet-600"> {uniqueClicks} </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium block mb-2">Source</label>
-                <Select value={sourceFilter} onValueChange={(v) => setSourceFilter(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Sources" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {filterOptions.sources.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Filters */}
+              <div className="flex-1 flex items-center justify-end gap-3">
+                <div className="flex items-center gap-2">
+                  <Select value={countryFilter} onValueChange={setCountryFilter}>
+                    <SelectTrigger className="w-36 bg-white">
+                      <SelectValue placeholder="All Countries" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Worldwide</SelectItem>
+                      {filterOptions.countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                    <SelectTrigger className="w-36 bg-white">
+                      <SelectValue placeholder="All Sources" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {filterOptions.sources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+
+                  <Button variant="outline" size="sm" onClick={() => { setCountryFilter("all"); setSourceFilter("all"); }}>
+                    Clear
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={() => { setCountryFilter("all"); setSourceFilter("all"); }}>Reset</Button>
-              <Button onClick={() => fetchSessions()} variant="secondary">Refresh</Button>
+            {/* Sessions list */}
+            <div className="space-y-6">
+              {loading ? (
+                <div className="text-center py-10 text-white">Loading...</div>
+              ) : sessions.length === 0 ? (
+                <Card>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground text-gray-100">No sessions yet.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                sessions.map((session, i) => <div key={session.session_id || i} className="mb-4"><SessionCard session={session} idx={i} /></div>)
+              )}
             </div>
           </div>
-        </Card>
-
-        {/* Sessions list (card view) */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-10">Loading...</div>
-          ) : sessions.length === 0 ? (
-            <Card>
-              <CardContent>
-                <div className="text-center text-gray-500 py-6">No analytics data</div>
-              </CardContent>
-            </Card>
-          ) : (
-            sessions.map((s, i) => <SessionCard key={s.session_id || i} session={s} idx={i} />)
-          )}
         </div>
       </div>
     </div>

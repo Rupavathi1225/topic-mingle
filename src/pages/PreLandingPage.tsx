@@ -20,13 +20,13 @@ const PreLandingPage = () => {
     try {
       // Fetch related search first
       const { data: rsData, error: rsError } = await supabase
-        .from('related_searches')
-        .select('*')
-        .eq('id', searchId)
+        .from("related_searches")
+        .select("*")
+        .eq("id", searchId)
         .single();
 
       if (rsError) {
-        console.error('Error fetching related search:', rsError);
+        console.error("Error fetching related search:", rsError);
         setLoading(false);
         return;
       }
@@ -35,33 +35,56 @@ const PreLandingPage = () => {
 
       // Fetch pre-landing page data
       const { data: preLandingData, error: plError } = await supabase
-        .from('pre_landing_pages')
-        .select('*')
-        .eq('related_search_id', searchId)
+        .from("pre_landing_pages")
+        .select("*")
+        .eq("related_search_id", searchId)
         .maybeSingle();
 
       if (plError) {
-        console.error('Error fetching pre-landing page:', plError);
+        console.error("Error fetching pre-landing page:", plError);
       }
 
       setPreLanding(preLandingData);
       setLoading(false);
     } catch (error) {
-      console.error('Error in fetchPreLanding:', error);
+      console.error("Error in fetchPreLanding:", error);
       setLoading(false);
     }
   };
 
+  // ⭐⭐⭐ UPDATED: Save email + IP + IDs ⭐⭐⭐
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && relatedSearch) {
-      // You can save the email to database here if needed
-      // await supabase.from('email_submissions').insert({ email, related_search_id: searchId });
-      
+
+    if (!email || !relatedSearch) return;
+
+    try {
+      // 1️⃣ Get visitor IP
+      const ipResponse = await fetch("https://api64.ipify.org?format=json");
+      const ipData = await ipResponse.json();
+
+      // 2️⃣ Save to database
+      const { error } = await supabase.from("pre_landing_emails").insert({
+        email: email,
+        related_search_id: searchId,
+        pre_landing_page_id: preLanding?.id || null,
+        ip_address: ipData.ip,
+      });
+
+      if (error) {
+        console.error("Email save error:", error);
+        toast.error("Failed to save email");
+        return;
+      }
+
+      // 3️⃣ Success + redirect
       toast.success("Thank you! Redirecting...");
       setTimeout(() => {
         window.location.href = relatedSearch.target_url;
       }, 1500);
+    } catch (err) {
+      console.error("Error submitting email:", err);
+      toast.error("Something went wrong");
     }
   };
 
@@ -81,21 +104,23 @@ const PreLandingPage = () => {
     );
   }
 
-  // If no pre-landing page data, show default page
   const bgStyle = preLanding?.background_image_url
-    ? { backgroundImage: `url(${preLanding.background_image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : { backgroundColor: preLanding?.background_color || '#f3f4f6' };
+    ? {
+        backgroundImage: `url(${preLanding.background_image_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : { backgroundColor: preLanding?.background_color || "#f3f4f6" };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={bgStyle}>
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={bgStyle}
+    >
       <div className="max-w-2xl w-full bg-background/95 backdrop-blur-sm rounded-lg shadow-xl p-8 space-y-8">
         {preLanding?.logo_url && (
           <div className="text-center">
-            <img
-              src={preLanding.logo_url}
-              alt="Logo"
-              className="h-16 mx-auto"
-            />
+            <img src={preLanding.logo_url} alt="Logo" className="h-16 mx-auto" />
           </div>
         )}
 
@@ -126,6 +151,7 @@ const PreLandingPage = () => {
             required
             className="text-center text-lg py-6"
           />
+
           <Button type="submit" size="lg" className="w-full text-lg py-6">
             {preLanding?.cta_text || "Continue"}
           </Button>

@@ -4,6 +4,8 @@ import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminRelatedSearches from "@/components/admin/AdminRelatedSearches";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminPreLanding from "@/components/admin/AdminPreLanding";
+import AdminEmails from "@/components/admin/AdminEmails"; // ✅ NEW IMPORT
+
 import DataOrbitZoneAnalytics from "@/components/admin/DataOrbitZoneAnalytics";
 import WebResultsAnalytics from "@/components/admin/WebResultsAnalytics";
 import DataOrbitZoneBlogManager from "@/components/admin/dataorbitzone/DataOrbitZoneBlogManager";
@@ -36,17 +38,17 @@ const Admin = () => {
             <TabsTrigger value="dataorbitzone">DataOrbitZone</TabsTrigger>
             <TabsTrigger value="webresults">WebResults</TabsTrigger>
             <TabsTrigger value="topsports">TopSports</TabsTrigger>
-          
           </TabsList>
 
           {/* TopicMingle Management */}
           <TabsContent value="topicmingle" className="mt-6">
             <Tabs defaultValue="blogs" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="blogs">Blogs</TabsTrigger>
                 <TabsTrigger value="searches">Related Searches</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 <TabsTrigger value="prelanding">Pre-Landing</TabsTrigger>
+                <TabsTrigger value="emails">Emails</TabsTrigger> {/* ✅ NEW TAB */}
               </TabsList>
 
               <TabsContent value="blogs" className="mt-6">
@@ -63,6 +65,10 @@ const Admin = () => {
 
               <TabsContent value="prelanding" className="mt-6">
                 <AdminPreLanding />
+              </TabsContent>
+
+              <TabsContent value="emails" className="mt-6"> {/* ✅ NEW CONTENT */}
+                <AdminEmails />
               </TabsContent>
             </Tabs>
           </TabsContent>
@@ -133,23 +139,6 @@ const Admin = () => {
               <TabsContent value="hero" className="mt-6">
                 <TopSportsHeroEditor />
               </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          {/* TopUniversityTerritian Management */}
-          <TabsContent value="topuniversityterritian" className="mt-6">
-            <Tabs defaultValue="landing" className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="landing">Landing Page</TabsTrigger>
-                <TabsTrigger value="categories">Categories</TabsTrigger>
-                <TabsTrigger value="webresults">Web Results</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                <TabsTrigger value="prelanding">Pre-Landing</TabsTrigger>
-                <TabsTrigger value="geo">Geo-Restrictions</TabsTrigger>
-                <TabsTrigger value="email">Email Captures</TabsTrigger>
-              </TabsList>
-
-             
             </Tabs>
           </TabsContent>
         </Tabs>
